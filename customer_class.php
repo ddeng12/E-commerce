@@ -103,6 +103,30 @@ class Customer extends DatabaseConnection {
         }
     }
     
+    public function get_customer_by_email($email) {
+        $connection = $this->getConnection();
+        
+        if (!$connection) {
+            return false;
+        }
+        
+        try {
+            $query = "SELECT * FROM customers WHERE email = :email";
+            $stmt = $connection->prepare($query);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                return $stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                return false;
+            }
+            
+        } catch(PDOException $e) {
+            return false;
+        }
+    }
+    
     public function delete($id) {
         $connection = $this->getConnection();
         

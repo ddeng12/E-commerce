@@ -32,6 +32,21 @@
             cursor: pointer;
             width: 100%;
         }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .success {
+            color: green;
+            font-size: 12px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -40,14 +55,23 @@
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" required>
+                <div class="error" id="email_error"></div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
+                <div class="error" id="password_error"></div>
             </div>
             
-            <button type="submit" class="btn">Login</button>
+            <button type="submit" class="btn" id="submitBtn">Login</button>
+            
+            <div class="loading" id="loading">
+                Processing login...
+            </div>
+            
+            <div class="error" id="general_error"></div>
+            <div class="success" id="general_success"></div>
         </form>
         
         <div style="text-align: center; margin-top: 15px;">
@@ -57,5 +81,7 @@
         <div style="text-align: center; margin-top: 15px;">
             <a href="index.php">← Back to Home</a>
         </div>
+    
+    <script src="login.js"></script>
 </body>
 </html>
