@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'core.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,9 +12,13 @@ session_start();
     <h1>Welcome to the Platform</h1>
     
     <nav>
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</span> | 
-            <a href="logout.php">Logout</a>
+        <?php if (isLoggedIn()): ?>
+            <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</span>
+            | <a href="dashboard.php">Dashboard</a>
+            <?php if (isAdmin()): ?>
+                | <a href="admin.php">Admin Panel</a>
+            <?php endif; ?>
+            | <a href="logout.php">Logout</a>
         <?php else: ?>
             <a href="register.php">Register</a> | 
             <a href="login.php">Login</a>
