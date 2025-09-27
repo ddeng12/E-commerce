@@ -50,7 +50,7 @@
     </style>
 </head>
 <body>
-    <h2>Customer Registration</h2>
+        <h2>Customer Registration</h2>
         <form id="registrationForm">
             <div class="form-group">
                 <label for="full_name">Full Name *</label>
@@ -306,7 +306,7 @@
         
         <div style="text-align: center; margin-top: 20px;">
             <a href="index.php">← Back to Home</a>
-        </div>
+    </div>
     
     <script src="register.js"></script>
 </body>

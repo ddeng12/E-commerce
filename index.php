@@ -9,16 +9,16 @@ require_once 'core.php';
     <title>E-commerce Platform</title>
 </head>
 <body>
-    <h1>Welcome to the Platform</h1>
+    <h1>Welcome David Deng</h1>
     
     <nav>
         <?php if (isLoggedIn()): ?>
-            <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</span>
-            | <a href="dashboard.php">Dashboard</a>
             <?php if (isAdmin()): ?>
-                | <a href="admin.php">Admin Panel</a>
+                <a href="logout.php">Logout</a> | 
+                <a href="category.php">Category</a>
+            <?php else: ?>
+                <a href="logout.php">Logout</a>
             <?php endif; ?>
-            | <a href="logout.php">Logout</a>
         <?php else: ?>
             <a href="register.php">Register</a> | 
             <a href="login.php">Login</a>
