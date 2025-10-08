@@ -1,10 +1,10 @@
 <?php
 class DatabaseConnection {
     private $host = 'localhost';
-    private $db_name = 'shop_db';
-    private $username = 'root';
-    private $password = '';
-    private $conn;
+    private $db_name = 'ecommerce_2025A_david_deng';
+    private $username = 'david.deng';
+    private $password = 'dengdit3';
+    private $conn;git 
 
     public function getConnection() {
         $this->conn = null;
