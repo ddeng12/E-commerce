@@ -9,23 +9,10 @@ requireAdmin();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Category CRUD Operations - Admin Panel</title>
+    <title>Brand Management - Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/styles.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
         .admin-header {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             color: white;
@@ -96,6 +83,13 @@ requireAdmin();
             border-bottom: 2px solid rgba(220, 53, 69, 0.2);
         }
         
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
@@ -108,7 +102,7 @@ requireAdmin();
             font-size: 14px;
         }
         
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 14px 16px;
             border: 2px solid #e2e8f0;
@@ -119,7 +113,7 @@ requireAdmin();
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #dc3545;
             box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -155,6 +149,49 @@ requireAdmin();
             box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
         }
         
+        .brands-table {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .brands-table th {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            font-weight: 600;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .brands-table td {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .brands-table tr:hover {
+            background: rgba(220, 53, 69, 0.05);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 18px;
+        }
+        
         .error {
             color: #dc3545;
             font-size: 14px;
@@ -168,10 +205,18 @@ requireAdmin();
         }
         
         @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
             .admin-nav a {
                 display: block;
                 margin-bottom: 10px;
                 margin-right: 0;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -179,31 +224,94 @@ requireAdmin();
 <body>
     <div class="container">
         <div class="admin-header">
-            <h1>Category CRUD Operations</h1>
-            <p>Admin Dashboard - Create, Read, Update, Delete Categories</p>
+            <h1>Brand CRUD Operations</h1>
+            <p>Admin Dashboard - Create, Read, Update, Delete Brands</p>
         </div>
         
         <div class="admin-nav">
             <a href="admin.php">Admin Panel</a>
             <a href="product.php">Product CRUD</a>
-            <a href="brand.php">Brand CRUD</a>
+            <a href="category.php">Category CRUD</a>
             <a href="../assets/logout.php">Logout</a>
         </div>
+        
+        <div class="form-section">
+            <h2>Add New Brand</h2>
+            <form id="addBrandForm">
+                <div class="form-group">
+                    <label for="brand_name">Brand Name *</label>
+                    <input type="text" id="brand_name" name="name" required>
+                    <div class="error" id="name_error"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="add_category_id">Category *</label>
+                    <select id="add_category_id" name="category_id" required>
+                        <option value="">Select Category</option>
+                    </select>
+                    <div class="error" id="category_error"></div>
+                </div>
+                
+                <button type="submit" class="btn btn-success" id="addBtn">Add Brand</button>
+            </form>
+        </div>
+    </div>
     
-    <div class="admin-section">
-        <h2>Add New Category</h2>
-        <form id="addCategoryForm">
-            <div class="form-group">
-                <label for="category_name">Category Name *</label>
-                <input type="text" id="category_name" name="name" required>
-                <div class="error" id="name_error"></div>
-            </div>
+    <script>
+        // Load categories for the form
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCategories();
+        });
+        
+        function loadCategories() {
+            fetch('../actions/fetch_category_action.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const categorySelect = document.getElementById('add_category_id');
+                        categorySelect.innerHTML = '<option value="">Select Category</option>';
+                        data.data.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading categories:', error));
+        }
+    </script>
+    <script>
+        // Handle add brand form submission
+        document.getElementById('addBrandForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addBrand();
+        });
+        
+        function addBrand() {
+            const form = document.getElementById('addBrandForm');
+            const formData = new FormData(form);
             
-            <button type="submit" class="btn-admin" id="addBtn">Add Category</button>
-        </form>
-    </div>
-    </div>
-    
-    <script src="../assets/category.js"></script>
+            fetch('../actions/add_brand_action.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    form.reset();
+                    // Reload categories
+                    loadCategories();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding brand: ' + error.message);
+            });
+        }
+    </script>
 </body>
 </html>

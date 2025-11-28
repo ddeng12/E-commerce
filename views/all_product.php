@@ -2,26 +2,19 @@
 require_once '../core.php';
 require_once '../actions/product_actions.php';
 
-// Redirect admin users to admin panel - they shouldn't see customer homepage
-if (isLoggedIn() && isAdmin()) {
-    header('Location: admin.php');
-    exit;
-}
-
-// Get featured products for homepage
+// Get products data
 $productActions = new ProductActions();
-$_GET['action'] = 'view_all';
-$_GET['page'] = 1;
 $result = $productActions->handleRequest();
 
-$featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : [];
+$products = $result['success'] ? $result['data'] : [];
+$pagination = $result['pagination'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>45G1 Shop - Welcome</title>
+    <title>All Products - E-commerce Store</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -65,88 +58,13 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .search-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .search-form {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .search-form input, .search-form select {
-            padding: 16px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            min-width: 200px;
-            flex: 1;
-            max-width: 300px;
-            background: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        .search-form input:focus, .search-form select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
-        }
-        
-        .btn-secondary:hover {
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
         }
         
         .nav {
             display: flex;
             justify-content: center;
             gap: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
         
         .nav a {
@@ -167,7 +85,7 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
-        .featured-section {
+        .search-section {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 24px;
             padding: 40px;
@@ -176,156 +94,219 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .featured-section h2 {
-            color: #2d3748;
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 2.5em;
-            font-weight: 600;
+        .search-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-form input, .search-form select {
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-form input:focus, .search-form select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
         }
         
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
         }
         
         .product-card {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
         
         .product-image {
             width: 100%;
-            height: 180px;
+            height: 200px;
             object-fit: cover;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover .product-image {
-            transform: scale(1.05);
         }
         
         .product-info {
-            padding: 24px;
+            padding: 20px;
         }
         
         .product-title {
             font-size: 1.2em;
             font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 12px;
-            line-height: 1.4;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.3;
         }
         
         .product-price {
-            font-size: 1.6em;
+            font-size: 1.5em;
             font-weight: 700;
             color: #667eea;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .product-meta {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #718096;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #666;
         }
         
         .product-category, .product-brand {
             background: rgba(102, 126, 234, 0.1);
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 4px 8px;
+            border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
-            color: #667eea;
         }
         
-        .view-product {
+        .add-to-cart {
             width: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 25px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 500;
             transition: all 0.3s ease;
-            text-decoration: none;
-            text-align: center;
-            display: block;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
-        .view-product:hover {
+        .add-to-cart:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .welcome-message {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-        
-        .welcome-message h2 {
-            font-size: 2em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-        
-        .welcome-message p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .quick-actions {
+        .pagination {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .pagination a, .pagination span {
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+        
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .pagination .current {
+            background: #667eea;
+            color: white;
+        }
+        
+        .no-products {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .product-id {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
         }
         
         @media (max-width: 768px) {
             .search-form {
                 flex-direction: column;
-                align-items: center;
             }
             
             .search-form input, .search-form select {
                 min-width: 100%;
-                max-width: 100%;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
             }
             
             .nav {
                 flex-direction: column;
                 align-items: center;
-            }
-            
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
             }
         }
     </style>
@@ -333,11 +314,11 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
 <body>
     <div class="container">
         <div class="header">
-            <h1>45G1 Shop</h1>
+            <h1>Our Products</h1>
             
             <nav class="nav">
+                <a href="index.php">Home</a>
                 <a href="all_product.php">All Products</a>
-                <a href="cart.php">Cart</a>
                 <?php if (isLoggedIn()): ?>
                     <?php if (isAdmin()): ?>
                         <a href="product.php">Add Product</a>
@@ -346,46 +327,51 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
                     <?php endif; ?>
                     <a href="../assets/logout.php">Logout</a>
                 <?php else: ?>
-                    <a href="register.php">Register</a>
                     <a href="login.php">Login</a>
+                    <a href="register.php">Register</a>
                 <?php endif; ?>
             </nav>
         </div>
         
         <div class="search-section">
-            <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Search Products</h2>
-            <form class="search-form" method="GET" action="product_search_result.php">
-                <input type="text" name="q" placeholder="Search products..." id="searchInput">
+            <form class="search-form" id="searchForm">
+                <input type="text" name="search" placeholder="Search products..." id="searchInput">
                 <select name="category_id" id="categoryFilter">
                     <option value="">All Categories</option>
-                    <!-- Categories will be populated by JavaScript -->
                 </select>
                 <select name="brand_id" id="brandFilter">
                     <option value="">All Brands</option>
-                    <!-- Brands will be populated by JavaScript -->
                 </select>
+                <input type="number" name="min_price" placeholder="Min Price" step="0.01" min="0">
+                <input type="number" name="max_price" placeholder="Max Price" step="0.01" min="0">
                 <button type="submit" class="btn">Search</button>
+                <button type="button" class="btn btn-secondary" onclick="clearFilters()">Clear</button>
             </form>
             
-            <div class="quick-actions">
-                <a href="all_product.php" class="btn btn-secondary">Browse All Products</a>
-                <a href="product_search_result.php?category_id=1" class="btn btn-secondary">Electronics</a>
-                <a href="product_search_result.php?category_id=2" class="btn btn-secondary">Clothing</a>
-                <a href="product_search_result.php?category_id=3" class="btn btn-secondary">Footwear</a>
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Quick Filters:</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn" onclick="filterByCategory('')">All Products</button>
+                        <button class="btn" onclick="filterByCategory('1')">Electronics</button>
+                        <button class="btn" onclick="filterByCategory('2')">Clothing</button>
+                        <button class="btn" onclick="filterByCategory('3')">Footwear</button>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <?php if (!empty($featuredProducts)): ?>
-            <div class="featured-section">
-                <h2>Featured Products</h2>
+        <div id="productsContainer">
+            <?php if ($result['success'] && !empty($products)): ?>
                 <div class="products-grid">
-                    <?php foreach ($featuredProducts as $product): ?>
+                    <?php foreach ($products as $product): ?>
                         <div class="product-card">
+                            <div class="product-id">#<?php echo htmlspecialchars($product['id']); ?></div>
                             <?php if ($product['image_path']): ?>
                                 <img src="../<?php echo htmlspecialchars($product['image_path']); ?>" 
                                      alt="<?php echo htmlspecialchars($product['title']); ?>" 
                                      class="product-image">
-        <?php else: ?>
+                            <?php else: ?>
                                 <div class="product-image"></div>
                             <?php endif; ?>
                             
@@ -398,30 +384,43 @@ $featuredProducts = $result['success'] ? array_slice($result['data'], 0, 6) : []
                                     <span class="product-brand"><?php echo htmlspecialchars($product['brand_name']); ?></span>
                                 </div>
                                 
-                                <a href="single_product.php?id=<?php echo $product['id']; ?>" class="view-product">
-                                    View Product
-                                </a>
+                                <button class="add-to-cart" onclick="addToCart(<?php echo $product['id']; ?>)">
+                                    Add to Cart
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="all_product.php" class="btn">View All Products</a>
+                <?php if ($pagination && $pagination['total_pages'] > 1): ?>
+                    <div class="pagination">
+                        <?php if ($pagination['current_page'] > 1): ?>
+                            <a href="?page=<?php echo $pagination['current_page'] - 1; ?>">← Previous</a>
+                        <?php endif; ?>
+                        
+                        <?php for ($i = 1; $i <= $pagination['total_pages']; $i++): ?>
+                            <?php if ($i == $pagination['current_page']): ?>
+                                <span class="current"><?php echo $i; ?></span>
+                            <?php else: ?>
+                                <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+                        
+                        <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
+                            <a href="?page=<?php echo $pagination['current_page'] + 1; ?>">Next →</a>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                
+            <?php else: ?>
+                <div class="no-products">
+                    <h3>No products found</h3>
+                    <p>Try adjusting your search criteria or browse all products.</p>
                 </div>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
     
     <script src="../assets/product_display.js"></script>
-    <script>
-        // Add keyboard shortcut for search
-        document.addEventListener('keydown', function(e) {
-            if (e.key === '/' && !e.target.matches('input, textarea')) {
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-            }
-        });
-    </script>
 </body>
 </html>
